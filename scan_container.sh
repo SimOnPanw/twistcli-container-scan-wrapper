@@ -1,9 +1,6 @@
 #!/bin/bash
 # Script to scan a container image using Twistcli
 
-# Define Prisma Cloud URL
-PRISMA_CLOUD_URL="https://api2.eu.prismacloud.io"
-
 if [ -z "$1" ]; then
   echo "Error: No container image specified as argument."
   exit 1
@@ -47,8 +44,27 @@ fi
 
 echo "CWP token obtained successfully."
 
+# Check if twistcli exists, if not download it
+if [ ! -f "./twistcli" ]; then
+  echo "twistcli not found in current directory, downloading..."
+  
+  # Download twistcli
+  echo "Downloading twistcli from $COMPUTE_URL..."
+  curl --progress-bar -L -k --header "authorization: Bearer $CWP_TOKEN" \
+    "$COMPUTE_URL/api/v1/util/twistcli" > twistcli
+  
+  if [ $? -ne 0 ]; then
+    echo "Failed to download twistcli"
+    exit 1
+  fi
+  
+  # Make executable
+  chmod a+x twistcli
+  echo "twistcli downloaded successfully"
+fi
+
 # Step 3: Use the CWP token with twistcli
 echo "Scanning container image: $CONTAINER_IMAGE"
 
 # Execute twistcli scan with the CWP token
-twistcli images scan --address="$COMPUTE_URL" --token="$CWP_TOKEN" --details $CONTAINER_IMAGE
+./twistcli images scan --address="$COMPUTE_URL" --token="$CWP_TOKEN" --details $CONTAINER_IMAGE

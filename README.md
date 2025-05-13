@@ -23,6 +23,7 @@ Before running this script, ensure you have the following:
 3.  **`twistcli`**: The Prisma Cloud Compute command-line interface. The script assumes `twistcli` is in your system's PATH or in the same directory as the script.
 4.  **Prisma Cloud Credentials**: You need to set your Prisma Cloud username and password as environment variables:
     ```bash
+    export RISMA_CLOUD_URL="https://api.eu.prismacloud.io"
     export PRISMA_CLOUD_USERNAME="your_prisma_username"
     export PRISMA_CLOUD_PASSWORD="your_prisma_password"
     ```
@@ -56,7 +57,7 @@ The script will output status messages for each step (token acquisition, URL ret
 
 ## Script Variables
 
-*   `PRISMA_CLOUD_URL`: The base URL for the Prisma Cloud API. Defaults to `https://api2.eu.prismacloud.io`.
+*   `PRISMA_CLOUD_URL`: The base URL for the Prisma Cloud API. 
 *   `PRISMA_CLOUD_USERNAME`: Your Prisma Cloud username (must be set as an environment variable).
 *   `PRISMA_CLOUD_PASSWORD`: Your Prisma Cloud password (must be set as an environment variable).
 *   `CONTAINER_IMAGE`: The container image to scan (taken from the first command-line argument).

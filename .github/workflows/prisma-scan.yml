@@ -1,0 +1,30 @@
+name: Prisma Cloud Container Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      container_image:
+        description: 'Container image to scan (e.g. nginx:latest)'
+        required: true
+        type: string
+
+jobs:
+  scan-container:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq
+
+      - name: Run container scan
+        env:
+          PRISMA_CLOUD_URL: ${{ secrets.PRISMA_CLOUD_URL }}
+          PRISMA_CLOUD_USERNAME: ${{ secrets.PRISMA_CLOUD_USERNAME }}
+          PRISMA_CLOUD_PASSWORD: ${{ secrets.PRISMA_CLOUD_PASSWORD }}
+        run: |
+          cd $GITHUB_WORKSPACE/twistcli
+          bash ./scan_container.sh "${{ github.event.inputs.container_image }}"
