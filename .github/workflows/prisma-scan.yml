@@ -26,5 +26,4 @@ jobs:
           PRISMA_CLOUD_USERNAME: ${{ secrets.PRISMA_CLOUD_USERNAME }}
           PRISMA_CLOUD_PASSWORD: ${{ secrets.PRISMA_CLOUD_PASSWORD }}
         run: |
-          cd $GITHUB_WORKSPACE/twistcli
           bash ./scan_container.sh "${{ github.event.inputs.container_image }}"
