@@ -50,8 +50,8 @@ if [ ! -f "./twistcli" ]; then
   
   # Download twistcli
   echo "Downloading twistcli from $COMPUTE_URL..."
-  curl --progress-bar -L -k --header "authorization: Bearer $CWP_TOKEN" \
-    "$COMPUTE_URL/api/v1/util/twistcli" > twistcli
+  curl -s -k --header "authorization: Bearer $CWP_TOKEN" \
+    "$COMPUTE_URL/api/v1/util/twistcli" -o twistcli
   
   if [ $? -ne 0 ]; then
     echo "Failed to download twistcli"
