@@ -1,0 +1,76 @@
+trigger:
+  branches:
+    include:
+    - main
+    - develop
+
+parameters:
+- name: containerImage
+  displayName: 'Container Image to Scan'
+  type: string
+  default: ''
+
+variables:
+- name: PRISMA_CLOUD_URL
+  value: '$(PRISMA_CLOUD_URL_VAR)'  
+- name: PRISMA_CLOUD_USERNAME
+  value: '$(PRISMA_CLOUD_USERNAME_VAR)'  
+- name: PRISMA_CLOUD_PASSWORD
+  value: '$(PRISMA_CLOUD_PASSWORD_VAR)' 
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: CmdLine@2
+  displayName: 'Get JWT Token from Prisma Cloud'
+  inputs:
+    script: |
+      echo "Obtaining JWT token from Prisma Cloud..."
+      JWT_TOKEN=$(curl --silent --location "$(PRISMA_CLOUD_URL)/login" \
+        --header 'Content-Type: application/json' \
+        --data-raw "{\"username\":\"$(PRISMA_CLOUD_USERNAME)\", \"password\":\"$(PRISMA_CLOUD_PASSWORD)\"}" \
+        | jq -r .token)
+      echo "##vso[task.setvariable variable=JWT_TOKEN;isSecret=true]$JWT_TOKEN"
+
+- task: CmdLine@2
+  displayName: 'Get Compute URL from Prisma Cloud'
+  inputs:
+    script: |
+      echo "Getting Compute URL from meta_info endpoint..."
+      COMPUTE_URL=$(curl --silent --location "$(PRISMA_CLOUD_URL)/meta_info" \
+        --header "x-redlock-auth: $(JWT_TOKEN)" \
+        | jq -r .twistlockUrl)
+      echo "##vso[task.setvariable variable=COMPUTE_URL]$COMPUTE_URL"
+
+- task: CmdLine@2
+  displayName: 'Get CWP Token from Compute Console'
+  inputs:
+    script: |
+      echo "Obtaining CWP token from Compute console..."
+      CWP_TOKEN=$(curl --silent --location "$(COMPUTE_URL)/api/v1/current/token" \
+        --header "x-redlock-auth: $(JWT_TOKEN)" \
+        | jq -r .token)
+      echo "##vso[task.setvariable variable=CWP_TOKEN;isSecret=true]$CWP_TOKEN"
+
+- task: CmdLine@2
+  displayName: 'Download TwistCLI'
+  inputs:
+    script: |
+      echo "Downloading twistcli from $(COMPUTE_URL)..."
+      curl -s -k --header "authorization: Bearer $(CWP_TOKEN)" \
+        "$(COMPUTE_URL)/api/v1/util/twistcli" -o $(Build.SourcesDirectory)/twistcli
+      
+      chmod +x $(Build.SourcesDirectory)/twistcli
+      echo "twistcli downloaded successfully"
+
+- task: CmdLine@2
+  displayName: 'Prisma Cloud - Scan Container Image'
+  inputs:
+    script: |      
+      echo "Scanning container image: ${{ parameters.containerImage }}"
+      $(Build.SourcesDirectory)/twistcli images scan \
+        --address="$(COMPUTE_URL)" \
+        --token="$(CWP_TOKEN)" \
+        --details \
+        ${{ parameters.containerImage }}
